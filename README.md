@@ -361,54 +361,54 @@ type VisualizationMode =
 
 #### 1.1 Project Setup
 
-- [ ] Initialize pnpm monorepo
-- [ ] Set up `packages/` structure
-- [ ] Configure TypeScript, ESLint, shared configs
-- [ ] Create basic `package.json` scripts
+- [x] Initialize pnpm monorepo
+- [x] Set up `packages/` structure
+- [x] Configure TypeScript, ESLint, shared configs
+- [x] Create basic `package.json` scripts
 
 #### 1.2 File Watcher
 
-- [ ] Implement file watcher with chokidar
-- [ ] Add debouncing (300ms)
-- [ ] CLI argument parsing for file path
-- [ ] Emit events on file change
+- [x] Implement file watcher with chokidar
+- [x] Add debouncing (300ms)
+- [x] CLI argument parsing for file path
+- [x] Emit events on file change
 
 #### 1.3 Basic Instrumenter
 
-- [ ] Parse TS/JS file with TypeScript Compiler API
-- [ ] Identify array declarations
-- [ ] Identify array index assignments
-- [ ] Inject basic `__trace` calls
-- [ ] Output transformed code as string
+- [x] Parse TS/JS file with TypeScript Compiler API
+- [x] Identify array declarations
+- [x] Identify array index assignments
+- [x] Inject basic `__trace` calls
+- [x] Output transformed code as string
 
 #### 1.4 Basic Executor
 
-- [ ] Create sandboxed execution context
-- [ ] Implement `__trace` runtime object
-- [ ] Collect events into array
-- [ ] Add 5-second timeout
-- [ ] Return trace or error
+- [x] Create sandboxed execution context
+- [x] Implement `__trace` runtime object
+- [x] Collect events into array
+- [x] Add 5-second timeout
+- [x] Return trace or error
 
 #### 1.5 WebSocket Server
 
-- [ ] Set up `ws` server
-- [ ] Broadcast trace events on execution
-- [ ] Handle client connections
-- [ ] Send full trace on new connection
+- [x] Set up `ws` server
+- [x] Broadcast trace events on execution
+- [x] Handle client connections
+- [x] Send full trace on new connection
 
 #### 1.6 Visualizer MVP
 
-- [ ] Create Next.js app
-- [ ] Connect to WebSocket
-- [ ] Render array as vertical bars
-- [ ] Highlight current operation (compare/swap)
-- [ ] Basic play/pause button
+- [x] Create Next.js app
+- [x] Connect to WebSocket
+- [x] Render array as vertical bars
+- [x] Highlight current operation (compare/swap)
+- [x] Basic play/pause button
 
 #### 1.7 Demo
 
-- [ ] Create `examples/bubble-sort.ts`
-- [ ] Verify end-to-end flow works
-- [ ] Document how to run locally
+- [x] Create `examples/bubble-sort.ts`
+- [x] Verify end-to-end flow works
+- [x] Document how to run locally
 
 ---
 
@@ -708,6 +708,122 @@ algo-jit/
 ├── README.md
 └── .algojitrc.json
 ```
+
+---
+
+## Testing Methodology: RED-GREEN-REFACTOR
+
+This project follows a strict Test-Driven Development workflow using the RED-GREEN-REFACTOR cycle. This methodology enforces genuine test-first development by isolating each phase.
+
+### Why This Approach?
+
+Default development behavior tends to be "implementation-first" — writing the happy path and ignoring edge cases. When tests and implementation share the same context, implementation logic "bleeds" into test design, undermining true test-first development. The RED-GREEN-REFACTOR cycle solves this through architectural separation.
+
+### The Three Phases
+
+#### 🔴 RED Phase: Write Failing Tests
+
+**Goal:** Create tests that fail because the feature doesn't exist yet.
+
+**Rules:**
+- Write tests in isolation without seeing implementation plans
+- Tests should reflect actual requirements, not anticipated code structure
+- DO NOT proceed until test failure is confirmed
+- Focus on behavior, not implementation details
+
+```typescript
+// Example: Testing a new trace event type
+describe('TraceEvent', () => {
+  it('should capture array swap operations', () => {
+    const trace = executeInstrumented(`
+      const arr = [1, 2];
+      [arr[0], arr[1]] = [arr[1], arr[0]];
+    `);
+
+    expect(trace.events).toContainEqual(
+      expect.objectContaining({
+        type: 'array:swap',
+        data: { indices: [0, 1] }
+      })
+    );
+  });
+});
+```
+
+#### 🟢 GREEN Phase: Make Tests Pass
+
+**Goal:** Write the minimal code necessary to make the failing test pass.
+
+**Rules:**
+- Only see the test file and feature requirement
+- Write just enough code to pass — no more
+- Avoid over-engineering or premature optimization
+- DO NOT proceed until the test passes
+
+```typescript
+// Minimal implementation to pass the swap test
+function detectSwap(node: ts.Node): TraceEvent | null {
+  if (isArrayDestructuringSwap(node)) {
+    return {
+      type: 'array:swap',
+      data: { indices: extractSwapIndices(node) }
+    };
+  }
+  return null;
+}
+```
+
+#### 🔵 REFACTOR Phase: Improve Code Quality
+
+**Goal:** Clean up and optimize while keeping all tests passing.
+
+**Checklist:**
+- [ ] Extract reusable functions/composables
+- [ ] Simplify complex conditionals
+- [ ] Improve naming for clarity
+- [ ] Remove duplication
+- [ ] Ensure consistent patterns with existing code
+
+**Rules:**
+- Tests must stay green throughout refactoring
+- Each refactor step should be small and reversible
+- Run tests after every change
+
+### Workflow Summary
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    TDD Cycle                                │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│    ┌─────────┐         ┌─────────┐         ┌──────────┐    │
+│    │   RED   │ ──────► │  GREEN  │ ──────► │ REFACTOR │    │
+│    │  Write  │         │  Make   │         │  Clean   │    │
+│    │ Failing │         │  Test   │         │   Up     │    │
+│    │  Test   │         │  Pass   │         │  Code    │    │
+│    └─────────┘         └─────────┘         └────┬─────┘    │
+│         ▲                                       │          │
+│         └───────────────────────────────────────┘          │
+│                    Next Feature                            │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Phase Gates
+
+Each phase has an explicit gate that must be satisfied before proceeding:
+
+| Phase    | Gate Condition                     | Next Phase |
+| -------- | ---------------------------------- | ---------- |
+| RED      | Test runs and **fails**            | GREEN      |
+| GREEN    | Test runs and **passes**           | REFACTOR   |
+| REFACTOR | All tests pass, code quality check | RED (next) |
+
+### Benefits for algo-jit
+
+1. **Trace Event Coverage** — Each new trace event type gets tested in isolation before implementation
+2. **Instrumenter Reliability** — AST transformations are validated against expected outputs
+3. **Executor Safety** — Sandbox behavior is verified through edge case tests
+4. **UI Correctness** — Visualization components are tested for proper state handling
 
 ---
 

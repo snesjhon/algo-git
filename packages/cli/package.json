@@ -1,0 +1,28 @@
+{
+  "name": "@algo-jit/cli",
+  "version": "0.1.0",
+  "description": "CLI entry point for algo-jit",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "algo-jit": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@algo-jit/watcher": "workspace:*",
+    "@algo-jit/server": "workspace:*",
+    "@algo-jit/instrumenter": "workspace:*",
+    "@algo-jit/executor": "workspace:*",
+    "commander": "^12.1.0",
+    "open": "^10.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.16",
+    "typescript": "^5.3.3"
+  }
+}

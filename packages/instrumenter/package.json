@@ -1,0 +1,22 @@
+{
+  "name": "@algo-jit/instrumenter",
+  "version": "0.1.0",
+  "description": "Code instrumentation for algo-jit",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "ts-morph": "^21.0.1",
+    "typescript": "^5.3.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.16",
+    "vitest": "^1.2.2"
+  }
+}
